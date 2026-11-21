@@ -74,7 +74,7 @@ class EvolveGatePlugin(Star):
     async def initialize(self) -> None:
         await self._ensure_runtime_started()
 
-    @filter.on_loaded()
+    @filter.on_astrbot_loaded()
     async def on_loaded(self, *args: Any, **kwargs: Any) -> None:
         await self._ensure_runtime_started()
 
