@@ -1,0 +1,9 @@
+[project]
+name = "astrbot-plugin-evolve-gate"
+version = "0.1.0"
+description = "Bounded closed-loop self-evolution governance kernel for AstrBot"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

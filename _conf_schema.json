@@ -1,0 +1,52 @@
+{
+  "enabled": {
+    "description": "是否启用受控演进治理内核",
+    "type": "bool",
+    "default": true
+  },
+  "inject_golden_examples": {
+    "description": "是否向主对话注入零和淘汰的黄金台词示范（有私有语料引擎的插件可关闭此项）",
+    "type": "bool",
+    "default": true
+  },
+  "max_golden_examples": {
+    "description": "黄金示范池最大固定槽位数（Zero-Sum Budget，防止 Prompt 膨胀）",
+    "type": "int",
+    "default": 10
+  },
+  "schedule_hour": {
+    "description": "每日离线自动体检与代谢的本地小时（0-23）",
+    "type": "int",
+    "default": 3
+  },
+  "timezone": {
+    "description": "离线调度时区",
+    "type": "string",
+    "default": "Asia/Shanghai"
+  },
+  "auto_apply_passed_proposals": {
+    "description": "离线门控 100% 通过后是否自动应用参数快照",
+    "type": "bool",
+    "default": true
+  },
+  "auto_rollback_hours": {
+    "description": "新快照上线后持续观察的小时数，若异常率明显上升则自动回滚",
+    "type": "int",
+    "default": 48
+  },
+  "dashboard_enabled": {
+    "description": "是否启动内置演进状态与调试 Web 看板（零聊天斜杠命令）",
+    "type": "bool",
+    "default": true
+  },
+  "dashboard_host": {
+    "description": "内置 Web 看板监听地址（默认仅本机回环 127.0.0.1）",
+    "type": "string",
+    "default": "127.0.0.1"
+  },
+  "dashboard_port": {
+    "description": "内置 Web 看板端口（默认 8557，可自定义）",
+    "type": "int",
+    "default": 8557
+  }
+}
