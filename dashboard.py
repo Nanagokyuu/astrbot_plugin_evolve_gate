@@ -94,11 +94,15 @@ _DASHBOARD_HTML = """<!doctype html>
       background: var(--accent);
       color: var(--accent-fg);
       border: none;
-      padding: 8px 14px;
+      padding: 8px 12px;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
     }
+    .actions button { width: 132px; flex: 0 0 132px; }
+    .actions button#btn-lang { width: 64px; flex: 0 0 64px; }
     button.secondary { background: var(--secondary-bg); color: var(--secondary-fg); }
     button.danger { background: var(--bad); color: #ffffff; }
     .grid {
@@ -248,10 +252,29 @@ const I18N = {
     step: 'step',
     statuses: { active: 'active', rejected: 'rejected', reverted: 'reverted', proposed: 'proposed' },
     actionDone: 'Done',
+    descMap: {
+      '私聊气泡软字数上限': 'Soft max character limit per private chat bubble',
+      '表情包触发轮次冷却': 'Turn cooldown between meme replies',
+      '近期切片检索权重': 'Recency weight for voice-slice retrieval',
+    },
+    summaryMap: {
+      '当前指标平稳，维持参数或仅做黄金台词新陈代谢': 'Metrics stable; keep params or metabolize golden examples only',
+      '收紧气泡软上限以提升短句节奏': 'Tighten bubble soft limit to improve short-burst pacing',
+      '适度放宽表情包轮次冷却': 'Slightly relax meme cooldown turns',
+    },
   }
 };
 let lang = (localStorage.getItem('eg_lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en'));
 if (!I18N[lang]) lang = 'zh';
+function localizeText(raw, mapObj) {
+  const s = String(raw ?? '');
+  if (!s || lang !== 'en') return s;
+  if (mapObj && mapObj[s]) return mapObj[s];
+  if (s.includes('；')) {
+    return s.split('；').map(part => (mapObj && mapObj[part.trim()]) || part.trim()).join('; ');
+  }
+  return s;
+}
 const toast = document.getElementById('toast');
 function showToast(msg) {
   toast.textContent = msg;
@@ -291,7 +314,8 @@ async function loadStatus() {
   let pHtml = `<table><tr><th>${esc(L.space)}</th><th>${esc(L.param)}</th><th>${esc(L.current)}</th><th>${esc(L.bounds)}</th></tr>`;
   for (const sp of spaces) {
     for (const spec of sp.specs || []) {
-      pHtml += `<tr><td><code>${esc(sp.space_id)}</code></td><td><code>${esc(spec.name)}</code><br><small>${esc(spec.description)}</small></td><td><b>${esc(params[spec.name])}</b></td><td>[${esc(spec.min_val)}, ${esc(spec.max_val)}] ${esc(L.step)} ${esc(spec.step)}</td></tr>`;
+      const desc = localizeText(spec.description, L.descMap);
+      pHtml += `<tr><td><code>${esc(sp.space_id)}</code></td><td><code>${esc(spec.name)}</code><br><small>${esc(desc)}</small></td><td><b>${esc(params[spec.name])}</b></td><td>[${esc(spec.min_val)}, ${esc(spec.max_val)}] ${esc(L.step)} ${esc(spec.step)}</td></tr>`;
     }
   }
   if (!spaces.length) pHtml += `<tr><td colspan="4">${esc(L.noSpaces)}</td></tr>`;
@@ -303,7 +327,8 @@ async function loadStatus() {
   for (const sn of snaps) {
     const dt = new Date((sn.created_at || 0) * 1000).toLocaleString();
     const stLabel = (L.statuses && L.statuses[sn.status]) || sn.status;
-    sHtml += `<tr><td>#${sn.id}</td><td><span class="badge badge-${esc(sn.status)}">${esc(stLabel)}</span></td><td>${esc(dt)}</td><td>${esc(sn.summary || '')}</td></tr>`;
+    const sumText = localizeText(sn.summary || '', L.summaryMap);
+    sHtml += `<tr><td>#${sn.id}</td><td><span class="badge badge-${esc(sn.status)}">${esc(stLabel)}</span></td><td>${esc(dt)}</td><td>${esc(sumText)}</td></tr>`;
   }
   if (!snaps.length) sHtml += `<tr><td colspan="4">${esc(L.noSnaps)}</td></tr>`;
   sHtml += '</table>';
