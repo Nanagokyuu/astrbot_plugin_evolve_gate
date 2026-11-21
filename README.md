@@ -1,5 +1,7 @@
 # astrbot_plugin_evolve_gate
 
+**English** | [简体中文](README_zh.md)
+
 Bounded, regression-gated self-evolution plugin for [AstrBot](https://github.com/AstrBotDevs/AstrBot) — with **zero chat slash commands**.
 
 Instead of mutating your bot's core code or endlessly appending system prompt rules (which causes persona drift and context bloat), **EvolveGate** restricts online adaptation to:
@@ -12,7 +14,7 @@ Instead of mutating your bot's core code or endlessly appending system prompt ru
 
 Adding `/evolve` or `/rollback` commands inside QQ/Telegram chat breaks immersion for companion bots. EvolveGate deliberately registers **no `@filter.command` handlers** and is operated via:
 
-- **Built-in Web Dashboard**: `http://127.0.0.1:8557` (configurable host & port in plugin config)
+- **Built-in Web Dashboard**: `http://0.0.0.0:8557` (auto light/dark theme, bilingual ZH/EN UI, configurable host & port)
 - **CLI**: `python cli.py <status | check | apply | rollback>`
 - **Host Plugin API (`evolve-gate.v1`)**: Any AstrBot plugin can register tunable parameter spaces, regression gates, and telemetry enrichers.
 
@@ -26,7 +28,7 @@ Clone or copy this repository into your AstrBot `data/plugins/astrbot_plugin_evo
 | --- | --- | --- |
 | `enabled` | `true` | Enable telemetry & periodic evolution |
 | `dashboard_enabled` | `true` | Start built-in Web Dashboard |
-| `dashboard_host` | `127.0.0.1` | Dashboard bind host |
+| `dashboard_host` | `0.0.0.0` | Dashboard bind host (set `127.0.0.1` for local-only) |
 | `dashboard_port` | `8557` | Dashboard bind port |
 | `evolution_interval_hours` | `24` | Hours between automatic evolution cycles |
 | `auto_apply_passed_proposals` | `true` | Automatically apply proposals that pass all gates |

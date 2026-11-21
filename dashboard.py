@@ -1,4 +1,4 @@
-"""Built-in Web Dashboard for EvolveGate (default 127.0.0.1:8557)."""
+"""Built-in Web Dashboard for EvolveGate (default 0.0.0.0:8557)."""
 
 from __future__ import annotations
 
@@ -18,31 +18,64 @@ except ImportError:
 
 
 _DASHBOARD_HTML = """<!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EvolveGate Dashboard</title>
+  <meta name="color-scheme" content="light dark" />
+  <title>EvolveGate · 自进化治理看板</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --border: #334155;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
-      --accent: #38bdf8;
-      --ok: #34d399;
-      --warn: #fbbf24;
-      --bad: #f87171;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #0284c7;
+      --accent-fg: #ffffff;
+      --secondary-bg: #e2e8f0;
+      --secondary-fg: #0f172a;
+      --code-bg: #f1f5f9;
+      --ok: #059669;
+      --ok-bg: rgba(16, 185, 129, 0.14);
+      --warn: #d97706;
+      --warn-bg: rgba(245, 158, 11, 0.15);
+      --bad: #dc2626;
+      --bad-bg: rgba(239, 68, 68, 0.14);
+      --info: #0284c7;
+      --info-bg: rgba(14, 165, 233, 0.14);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --border: #334155;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --accent: #38bdf8;
+        --accent-fg: #0f172a;
+        --secondary-bg: #334155;
+        --secondary-fg: #f1f5f9;
+        --code-bg: #0f172a;
+        --ok: #34d399;
+        --ok-bg: rgba(52, 211, 153, 0.18);
+        --warn: #fbbf24;
+        --warn-bg: rgba(251, 191, 36, 0.18);
+        --bad: #f87171;
+        --bad-bg: rgba(248, 113, 113, 0.18);
+        --info: #38bdf8;
+        --info-bg: rgba(56, 189, 248, 0.18);
+      }
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 24px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.5;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     .container { max-width: 1080px; margin: 0 auto; }
     header {
@@ -54,19 +87,20 @@ _DASHBOARD_HTML = """<!doctype html>
       margin-bottom: 24px;
     }
     h1 { margin: 0; font-size: 1.5rem; }
+    h3 { margin-top: 0; font-size: 1.05rem; }
     .subtitle { color: var(--muted); font-size: 0.9rem; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     button {
       background: var(--accent);
-      color: #0f172a;
+      color: var(--accent-fg);
       border: none;
       padding: 8px 14px;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
     }
-    button.secondary { background: #334155; color: var(--text); }
-    button.danger { background: var(--bad); color: #0f172a; }
+    button.secondary { background: var(--secondary-bg); color: var(--secondary-fg); }
+    button.danger { background: var(--bad); color: #ffffff; }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -91,7 +125,7 @@ _DASHBOARD_HTML = """<!doctype html>
     }
     th { color: var(--muted); font-weight: 600; }
     code {
-      background: #0f172a;
+      background: var(--code-bg);
       padding: 2px 6px;
       border-radius: 4px;
       font-size: 0.85em;
@@ -103,15 +137,15 @@ _DASHBOARD_HTML = """<!doctype html>
       font-size: 0.78rem;
       font-weight: 600;
     }
-    .badge-active { background: rgba(52, 211, 153, 0.18); color: var(--ok); }
-    .badge-rejected { background: rgba(248, 113, 113, 0.18); color: var(--bad); }
-    .badge-reverted { background: rgba(251, 191, 36, 0.18); color: var(--warn); }
-    .badge-proposed { background: rgba(56, 189, 248, 0.18); color: var(--accent); }
+    .badge-active { background: var(--ok-bg); color: var(--ok); }
+    .badge-rejected { background: var(--bad-bg); color: var(--bad); }
+    .badge-reverted { background: var(--warn-bg); color: var(--warn); }
+    .badge-proposed { background: var(--info-bg); color: var(--info); }
     #toast {
       margin-bottom: 16px;
       padding: 10px 14px;
       border-radius: 8px;
-      background: #1e293b;
+      background: var(--card);
       border: 1px solid var(--accent);
       display: none;
     }
@@ -122,31 +156,102 @@ _DASHBOARD_HTML = """<!doctype html>
     <header>
       <div>
         <h1>EvolveGate</h1>
-        <div class="subtitle">Bounded Closed-Loop Self-Evolution · Zero Slash Commands</div>
+        <div id="subtitle" class="subtitle">有界闭环自进化治理看板 · 零聊天斜杠命令</div>
       </div>
       <div class="actions">
-        <button id="btn-refresh" class="secondary">Refresh</button>
-        <button id="btn-check">Dry-Run Check</button>
-        <button id="btn-apply">Run &amp; Apply</button>
-        <button id="btn-rollback" class="danger">Rollback Active</button>
+        <button id="btn-lang" class="secondary">EN</button>
+        <button id="btn-refresh" class="secondary">刷新状态</button>
+        <button id="btn-check">干跑演进检查</button>
+        <button id="btn-apply">执行并应用</button>
+        <button id="btn-rollback" class="danger">回滚当前快照</button>
       </div>
     </header>
     <div id="toast"></div>
     <div id="metrics" class="grid"></div>
     <div class="card">
-      <h3>Tunable Parameter Spaces</h3>
-      <div id="params">Loading...</div>
+      <h3 id="title-params">L0 有界可调参数空间</h3>
+      <div id="params">加载中...</div>
     </div>
     <div class="card">
-      <h3>Evolution Snapshots</h3>
-      <div id="snapshots">Loading...</div>
+      <h3 id="title-snapshots">演进快照历史</h3>
+      <div id="snapshots">加载中...</div>
     </div>
     <div class="card">
-      <h3>Golden Examples (Zero-Sum Pool)</h3>
-      <div id="golden">Loading...</div>
+      <h3 id="title-golden">黄金样本池（零和定额）</h3>
+      <div id="golden">加载中...</div>
     </div>
   </div>
 <script>
+const I18N = {
+  zh: {
+    subtitle: '有界闭环自进化治理看板 · 零聊天斜杠命令',
+    langBtn: 'EN',
+    refresh: '刷新状态',
+    check: '干跑演进检查',
+    apply: '执行并应用',
+    rollback: '回滚当前快照',
+    titleParams: 'L0 有界可调参数空间',
+    titleSnapshots: '演进快照历史',
+    titleGolden: '黄金样本池（零和定额）',
+    turns7d: '近 7 天对话轮次',
+    errorRate: '异常率',
+    avgLatency: '平均耗时',
+    activeSnap: '当前生效快照',
+    none: '无',
+    space: '参数空间',
+    param: '参数名',
+    current: '当前值',
+    bounds: '硬边界与步长',
+    noSpaces: '暂未注册可调参数空间。',
+    id: '编号',
+    status: '状态',
+    created: '创建时间',
+    summary: '变更说明',
+    noSnaps: '暂无演进快照记录。',
+    utility: '效用分',
+    hits: '命中次数',
+    example: '样本内容',
+    noGolden: '暂无黄金样本记录。',
+    step: '步长',
+    statuses: { active: '已生效', rejected: '已拦截', reverted: '已回滚', proposed: '待应用' },
+    actionDone: '操作完成',
+  },
+  en: {
+    subtitle: 'Bounded Closed-Loop Self-Evolution · Zero Slash Commands',
+    langBtn: '中文',
+    refresh: 'Refresh',
+    check: 'Dry-Run Check',
+    apply: 'Run & Apply',
+    rollback: 'Rollback Active',
+    titleParams: 'Tunable Parameter Spaces',
+    titleSnapshots: 'Evolution Snapshots',
+    titleGolden: 'Golden Examples (Zero-Sum Pool)',
+    turns7d: 'Turns (7d)',
+    errorRate: 'Error Rate',
+    avgLatency: 'Avg Latency',
+    activeSnap: 'Active Snapshot',
+    none: 'None',
+    space: 'Space',
+    param: 'Parameter',
+    current: 'Current',
+    bounds: 'Bounds',
+    noSpaces: 'No tunable parameter spaces registered yet.',
+    id: 'ID',
+    status: 'Status',
+    created: 'Created',
+    summary: 'Summary',
+    noSnaps: 'No snapshots yet.',
+    utility: 'Utility',
+    hits: 'Hits',
+    example: 'Example',
+    noGolden: 'No golden examples stored yet.',
+    step: 'step',
+    statuses: { active: 'active', rejected: 'rejected', reverted: 'reverted', proposed: 'proposed' },
+    actionDone: 'Done',
+  }
+};
+let lang = (localStorage.getItem('eg_lang') || (navigator.language.startsWith('zh') ? 'zh' : 'en'));
+if (!I18N[lang]) lang = 'zh';
 const toast = document.getElementById('toast');
 function showToast(msg) {
   toast.textContent = msg;
@@ -156,53 +261,74 @@ function showToast(msg) {
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function applyStaticTexts() {
+  const t = I18N[lang];
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.getElementById('subtitle').textContent = t.subtitle;
+  document.getElementById('btn-lang').textContent = t.langBtn;
+  document.getElementById('btn-refresh').textContent = t.refresh;
+  document.getElementById('btn-check').textContent = t.check;
+  document.getElementById('btn-apply').textContent = t.apply;
+  document.getElementById('btn-rollback').textContent = t.rollback;
+  document.getElementById('title-params').textContent = t.titleParams;
+  document.getElementById('title-snapshots').textContent = t.titleSnapshots;
+  document.getElementById('title-golden').textContent = t.titleGolden;
+}
 async function loadStatus() {
+  applyStaticTexts();
+  const L = I18N[lang];
   const res = await fetch('/api/status');
   const data = await res.json();
-  const t = data.telemetry || {};
+  const tel = data.telemetry || {};
   document.getElementById('metrics').innerHTML = `
-    <div class="card"><div class="metric-label">Turns (7d)</div><div class="metric-value">${t.turns ?? 0}</div></div>
-    <div class="card"><div class="metric-label">Error Rate</div><div class="metric-value">${Number(t.error_pct ?? 0).toFixed(1)}%</div></div>
-    <div class="card"><div class="metric-label">Avg Latency</div><div class="metric-value">${Math.round(t.mean_latency_ms ?? 0)} ms</div></div>
-    <div class="card"><div class="metric-label">Active Snapshot</div><div class="metric-value">${data.active_snapshot ? '#' + data.active_snapshot.id : 'None'}</div></div>
+    <div class="card"><div class="metric-label">${esc(L.turns7d)}</div><div class="metric-value">${tel.turns ?? 0}</div></div>
+    <div class="card"><div class="metric-label">${esc(L.errorRate)}</div><div class="metric-value">${Number(tel.error_pct ?? 0).toFixed(1)}%</div></div>
+    <div class="card"><div class="metric-label">${esc(L.avgLatency)}</div><div class="metric-value">${Math.round(tel.mean_latency_ms ?? 0)} ms</div></div>
+    <div class="card"><div class="metric-label">${esc(L.activeSnap)}</div><div class="metric-value">${data.active_snapshot ? '#' + data.active_snapshot.id : esc(L.none)}</div></div>
   `;
   const params = data.params || {};
   const spaces = data.spaces || [];
-  let pHtml = '<table><tr><th>Space</th><th>Parameter</th><th>Current</th><th>Bounds</th></tr>';
+  let pHtml = `<table><tr><th>${esc(L.space)}</th><th>${esc(L.param)}</th><th>${esc(L.current)}</th><th>${esc(L.bounds)}</th></tr>`;
   for (const sp of spaces) {
     for (const spec of sp.specs || []) {
-      pHtml += `<tr><td><code>${esc(sp.space_id)}</code></td><td><code>${esc(spec.name)}</code><br><small>${esc(spec.description)}</small></td><td><b>${esc(params[spec.name])}</b></td><td>[${esc(spec.min_val)}, ${esc(spec.max_val)}] step ${esc(spec.step)}</td></tr>`;
+      pHtml += `<tr><td><code>${esc(sp.space_id)}</code></td><td><code>${esc(spec.name)}</code><br><small>${esc(spec.description)}</small></td><td><b>${esc(params[spec.name])}</b></td><td>[${esc(spec.min_val)}, ${esc(spec.max_val)}] ${esc(L.step)} ${esc(spec.step)}</td></tr>`;
     }
   }
-  if (!spaces.length) pHtml += '<tr><td colspan="4">No tunable parameter spaces registered yet.</td></tr>';
+  if (!spaces.length) pHtml += `<tr><td colspan="4">${esc(L.noSpaces)}</td></tr>`;
   pHtml += '</table>';
   document.getElementById('params').innerHTML = pHtml;
 
   const snaps = data.snapshots || [];
-  let sHtml = '<table><tr><th>ID</th><th>Status</th><th>Created</th><th>Summary</th></tr>';
+  let sHtml = `<table><tr><th>${esc(L.id)}</th><th>${esc(L.status)}</th><th>${esc(L.created)}</th><th>${esc(L.summary)}</th></tr>`;
   for (const sn of snaps) {
     const dt = new Date((sn.created_at || 0) * 1000).toLocaleString();
-    sHtml += `<tr><td>#${sn.id}</td><td><span class="badge badge-${esc(sn.status)}">${esc(sn.status)}</span></td><td>${esc(dt)}</td><td>${esc(sn.summary || '')}</td></tr>`;
+    const stLabel = (L.statuses && L.statuses[sn.status]) || sn.status;
+    sHtml += `<tr><td>#${sn.id}</td><td><span class="badge badge-${esc(sn.status)}">${esc(stLabel)}</span></td><td>${esc(dt)}</td><td>${esc(sn.summary || '')}</td></tr>`;
   }
-  if (!snaps.length) sHtml += '<tr><td colspan="4">No snapshots yet.</td></tr>';
+  if (!snaps.length) sHtml += `<tr><td colspan="4">${esc(L.noSnaps)}</td></tr>`;
   sHtml += '</table>';
   document.getElementById('snapshots').innerHTML = sHtml;
 
   const golden = data.golden_examples || [];
-  let gHtml = '<table><tr><th>ID</th><th>Utility</th><th>Hits</th><th>Example</th></tr>';
+  let gHtml = `<table><tr><th>${esc(L.id)}</th><th>${esc(L.utility)}</th><th>${esc(L.hits)}</th><th>${esc(L.example)}</th></tr>`;
   for (const g of golden) {
     gHtml += `<tr><td>#${g.id}</td><td>${Number(g.utility_score || 0).toFixed(2)}</td><td>${g.hit_count || 0}</td><td>${esc(g.text)}</td></tr>`;
   }
-  if (!golden.length) gHtml += '<tr><td colspan="4">No golden examples stored yet.</td></tr>';
+  if (!golden.length) gHtml += `<tr><td colspan="4">${esc(L.noGolden)}</td></tr>`;
   gHtml += '</table>';
   document.getElementById('golden').innerHTML = gHtml;
 }
 async function postAction(path) {
   const res = await fetch(path, { method: 'POST' });
   const data = await res.json();
-  showToast(path + ': ' + JSON.stringify(data));
+  showToast(I18N[lang].actionDone + ' (' + path + '): ' + JSON.stringify(data));
   await loadStatus();
 }
+document.getElementById('btn-lang').onclick = () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('eg_lang', lang);
+  loadStatus();
+};
 document.getElementById('btn-refresh').onclick = loadStatus;
 document.getElementById('btn-check').onclick = () => postAction('/api/check');
 document.getElementById('btn-apply').onclick = () => postAction('/api/apply');
@@ -312,7 +438,7 @@ class DashboardServer:
         store: EvolveStore,
         api: EvolveGateAPI,
         *,
-        host: str = "127.0.0.1",
+        host: str = "0.0.0.0",
         port: int = 8557,
         max_golden_examples: int = 10,
         auto_rollback_hours: int = 48,

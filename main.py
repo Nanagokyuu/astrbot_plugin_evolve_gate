@@ -84,7 +84,7 @@ class EvolveGatePlugin(Star):
 
     async def _ensure_runtime_started(self) -> None:
         if self._cfg_bool("dashboard_enabled", True) and self._dashboard is None:
-            host = str(self.config.get("dashboard_host") or "127.0.0.1")
+            host = str(self.config.get("dashboard_host") or "0.0.0.0")
             port = self._cfg_int("dashboard_port", 8557, minimum=1024)
             srv = DashboardServer(
                 self.store,

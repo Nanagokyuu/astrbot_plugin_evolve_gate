@@ -1,5 +1,5 @@
 name: astrbot_plugin_evolve_gate
-desc: Bounded closed-loop self-evolution governance kernel for AstrBot (zero-sum style metabolism, bounded parameter tuning, regression gates, and built-in web dashboard on :8557).
+desc: AstrBot 有界闭环自进化治理插件（零和样本代谢、有界参数调优、回归门禁与 :8557 Web 看板，零聊天斜杠命令） | Bounded closed-loop self-evolution plugin for AstrBot.
 version: 0.1.0
 author: Nanagokyuu
 repo: https://github.com/Nanagokyuu/astrbot_plugin_evolve_gate

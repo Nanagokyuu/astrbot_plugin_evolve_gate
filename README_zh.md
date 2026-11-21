@@ -1,5 +1,7 @@
 # astrbot_plugin_evolve_gate
 
+[English](README.md) | **简体中文**
+
 面向 [AstrBot](https://github.com/AstrBotDevs/AstrBot) 的有界闭环自进化插件 —— **聊天窗口零斜杠命令**。
 
 为了避免直接修改代码或无限追加 System Prompt 规则导致的人设漂移与上下文膨胀，**EvolveGate** 将在线自进化严格限制在以下三层：
@@ -12,13 +14,13 @@
 
 在 QQ / Telegram 对话中敲 `/evolve` 或 `/rollback` 会瞬间打破伴侣机器人的真实感与沉浸感。EvolveGate 刻意**不注册任何 `@filter.command`**，而是通过以下方式观测与控制：
 
-- **内置独立 Web 看板**：默认 `http://127.0.0.1:8557`（可在插件配置中自定义端口与监听地址）
+- **内置独立 Web 看板**：默认 `http://0.0.0.0:8557`（支持自动跟随系统深浅色与中英切换，可在配置中自定义端口与监听地址）
 - **命令行工具**：`python cli.py <status | check | apply | rollback>`
 - **宿主插件扩展接口（`evolve-gate.v1`）**：其他插件可注册自己的可调参数空间、回归门禁与遥测增强器。
 
 ## 配置项说明
 
-- `dashboard_enabled` (`true`) / `dashboard_host` (`127.0.0.1`) / `dashboard_port` (`8557`)
+- `dashboard_enabled` (`true`) / `dashboard_host` (`0.0.0.0`) / `dashboard_port` (`8557`)
 - `evolution_interval_hours` (`24`)：自动进化周期（小时）
 - `auto_apply_passed_proposals` (`true`)：门禁通过后是否自动应用
 - `auto_rollback_hours` (`48`)：自动回滚观察窗口（小时）

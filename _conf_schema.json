@@ -40,9 +40,9 @@
     "default": true
   },
   "dashboard_host": {
-    "description": "内置 Web 看板监听地址（默认仅本机回环 127.0.0.1）",
+    "description": "内置 Web 看板监听地址（默认 0.0.0.0 方便远程管理，可按需改为 127.0.0.1）",
     "type": "string",
-    "default": "127.0.0.1"
+    "default": "0.0.0.0"
   },
   "dashboard_port": {
     "description": "内置 Web 看板端口（默认 8557，可自定义）",
