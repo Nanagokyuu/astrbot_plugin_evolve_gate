@@ -160,7 +160,7 @@ _DASHBOARD_HTML = """<!doctype html>
     <header>
       <div>
         <h1>EvolveGate</h1>
-        <div id="subtitle" class="subtitle">有界闭环自进化治理看板 · 零聊天斜杠命令</div>
+        <div id="subtitle" class="subtitle">有界闭环自进化治理看板</div>
       </div>
       <div class="actions">
         <button id="btn-lang" class="secondary">EN</button>
@@ -188,7 +188,7 @@ _DASHBOARD_HTML = """<!doctype html>
 <script>
 const I18N = {
   zh: {
-    subtitle: '有界闭环自进化治理看板 · 零聊天斜杠命令',
+    subtitle: '有界闭环自进化治理看板',
     langBtn: 'EN',
     refresh: '刷新状态',
     check: '干跑演进检查',
@@ -221,7 +221,7 @@ const I18N = {
     actionDone: '操作完成',
   },
   en: {
-    subtitle: 'Bounded Closed-Loop Self-Evolution · Zero Slash Commands',
+    subtitle: 'Bounded Closed-Loop Self-Evolution',
     langBtn: '中文',
     refresh: 'Refresh',
     check: 'Dry-Run Check',
