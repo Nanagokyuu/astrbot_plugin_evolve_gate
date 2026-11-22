@@ -93,17 +93,34 @@ async def run_evolution_cycle(
         return {"action": "auto_reverted", "snapshot_id": int(rollback_target["id"])}
 
     telemetry = store.summarize_telemetry(since_ts=ts - 86400)
-    golden_added = 0
-    for sample in (telemetry.get("samples") or [])[:2]:
-        if store.upsert_golden_example_zero_sum(
-            text=sample,
-            max_slots=max_golden_examples,
-            utility_score=0.85,
-            now_ts=ts,
-        ):
-            golden_added += 1
-
     specs, current = api.collect_current_params()
+    specs_dict = {
+        k: {"min_val": sp.min_val, "max_val": sp.max_val, "step": sp.step, "kind": sp.kind}
+        for k, sp in specs.items()
+    }
+    advisor_out = await api.run_proposal_advisors(specs=specs_dict, current=current, telemetry=telemetry)
+
+    golden_added = 0
+    advised_golden = advisor_out.get("golden_candidates") or []
+    if advised_golden:
+        for item in advised_golden[:2]:
+            if store.upsert_golden_example_zero_sum(
+                text=str(item["text"]),
+                max_slots=max_golden_examples,
+                utility_score=float(item.get("score") or 0.9),
+                now_ts=ts,
+            ):
+                golden_added += 1
+    else:
+        for sample in (telemetry.get("samples") or [])[:2]:
+            if store.upsert_golden_example_zero_sum(
+                text=sample,
+                max_slots=max_golden_examples,
+                utility_score=0.85,
+                now_ts=ts,
+            ):
+                golden_added += 1
+
     if not specs:
         return {
             "action": "golden_only",
@@ -112,6 +129,13 @@ async def run_evolution_cycle(
         }
 
     proposed, summary = propose_bounded_param_diff(specs, current, telemetry)
+    for k, direction in (advisor_out.get("param_directions") or {}).items():
+        if k in specs and k in current and direction in (-1, 1) and proposed.get(k) == current.get(k):
+            sp = specs[k]
+            proposed[k] = clamp_param_value(float(current[k]) + direction * sp.step, sp)
+    audit_note = str(advisor_out.get("audit_note") or "").strip()
+    if audit_note:
+        summary = f"{summary} | 审计: {audit_note}" if summary else f"审计: {audit_note}"
     passed, score, gate_report = await api.run_gates(proposed, telemetry)
     changed = any(proposed.get(k) != current.get(k) for k in proposed)
 

@@ -81,11 +81,21 @@ def test_evolution_cycle_gate_reject_and_apply_and_rollback(tmp_path: Path) -> N
         assert state["bubble_soft_max_chars"] == 30
         api.unregister(tok)
 
-        # Passing gate -> applies
+        # Passing gate + proposal advisor -> applies bounded direction & advisor golden sample
         api.register_regression_gate("allow", lambda _payload: {"passed": True, "score": 1.0, "reason": "ok"})
+        api.register_proposal_advisor(
+            "adv",
+            lambda _p: {
+                "golden_candidates": [{"text": "这句也太真实了", "score": 0.96}],
+                "param_directions": {"bubble_soft_max_chars": -1},
+                "audit_note": "整体自然",
+            },
+        )
         applied = await run_evolution_cycle(store, api, auto_apply=True, now_ts=10_200)
         assert applied["action"] == "active"
         assert state["bubble_soft_max_chars"] == 28
+        assert "审计: 整体自然" in applied["summary"]
+        assert store.list_golden_examples(limit=1)[0]["text"] == "这句也太真实了"
 
         # Post-apply degradation triggers auto-rollback
         for i in range(10):

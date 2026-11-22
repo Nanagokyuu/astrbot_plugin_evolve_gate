@@ -11,7 +11,7 @@ from typing import Any
 
 PLUGIN_ID = "astrbot_plugin_evolve_gate"
 API_VERSION = "evolve-gate.v1"
-REGISTRY_KINDS = ("tunable_space", "regression_gate", "telemetry_enricher")
+REGISTRY_KINDS = ("tunable_space", "regression_gate", "telemetry_enricher", "proposal_advisor")
 _REGISTRY_KEY = "_astrbot_evolve_gate_registry_v1"
 
 
@@ -58,6 +58,7 @@ class EvolveGateAPI:
         self._spaces = _REGISTRY["tunable_space"]
         self._gates = _REGISTRY["regression_gate"]
         self._enrichers = _REGISTRY["telemetry_enricher"]
+        self._advisors = _REGISTRY["proposal_advisor"]
 
     def _add(self, bucket: list[_Reg], kind: str, name: str, priority: int, payload: Any) -> str:
         clean = str(name or kind).strip() or kind
@@ -106,8 +107,19 @@ class EvolveGateAPI:
             raise TypeError("telemetry_enricher callback must be callable")
         return self._add(self._enrichers, "telemetry_enricher", enricher_id, priority, fn)
 
+    def register_proposal_advisor(
+        self,
+        advisor_id: str,
+        fn: Callable[[dict[str, Any]], Any],
+        *,
+        priority: int = 100,
+    ) -> str:
+        if not callable(fn):
+            raise TypeError("proposal_advisor callback must be callable")
+        return self._add(self._advisors, "proposal_advisor", advisor_id, priority, fn)
+
     def unregister(self, token: str) -> bool:
-        for bucket in (self._spaces, self._gates, self._enrichers):
+        for bucket in (self._spaces, self._gates, self._enrichers, self._advisors):
             for idx, item in enumerate(bucket):
                 if item.token == token:
                     bucket.pop(idx)
@@ -124,6 +136,7 @@ class EvolveGateAPI:
             "tunable_spaces": len(self._spaces),
             "regression_gates": len(self._gates),
             "telemetry_enrichers": len(self._enrichers),
+            "proposal_advisors": len(self._advisors),
         }
 
     def collect_current_params(self) -> tuple[dict[str, TunableParamSpec], dict[str, float | int]]:
@@ -196,6 +209,45 @@ class EvolveGateAPI:
 
     def iter_telemetry_enrichers(self) -> list[tuple[str, Callable[..., dict[str, Any]]]]:
         return [(reg.name, reg.payload) for reg in list(self._enrichers)]
+
+    async def run_proposal_advisors(
+        self,
+        *,
+        specs: dict[str, dict[str, Any]],
+        current: dict[str, float | int],
+        telemetry: dict[str, Any],
+    ) -> dict[str, Any]:
+        golden_candidates: list[dict[str, Any]] = []
+        param_directions: dict[str, int] = {}
+        notes: list[str] = []
+        for reg in list(self._advisors):
+            try:
+                res = reg.payload({"specs": specs, "current": dict(current), "telemetry": dict(telemetry)})
+                if inspect.isawaitable(res):
+                    res = await res
+                if not isinstance(res, dict):
+                    continue
+                for g in res.get("golden_candidates") or []:
+                    if isinstance(g, dict) and str(g.get("text") or "").strip():
+                        golden_candidates.append(
+                            {
+                                "text": str(g["text"]).strip(),
+                                "score": float(g.get("score") or 0.85),
+                            }
+                        )
+                for k, direction in (res.get("param_directions") or {}).items():
+                    if k in specs and direction in (-1, 0, 1):
+                        param_directions[k] = int(direction)
+                note = str(res.get("audit_note") or "").strip()
+                if note:
+                    notes.append(note)
+            except Exception:
+                continue
+        return {
+            "golden_candidates": golden_candidates,
+            "param_directions": param_directions,
+            "audit_note": "；".join(notes),
+        }
 
 
 def get_evolve_gate_api() -> EvolveGateAPI:
